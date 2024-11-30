@@ -1,2 +1,107 @@
 # youtube_upload
-youtube upload for python
+简易版
+修改自: https://github.com/tokland/youtube-upload
+
+
+
+https://github.com/tokland/youtube-upload
+
+linux 调用
+
+#以下是在linux中调试
+$ wget https://github.com/tokland/youtube-upload/archive/master.zip
+$ unzip master.zip
+$ cd youtube-upload-master
+$ python3 setup.py install
+
+# 上传完就发布
+$ youtube-upload --title="upload test" test.mp4
+
+或者
+# 如果不想安装 python3 setup.py install
+# 可以直接进入目录执行源文件
+$ python3 /root/youtube-upload-master/bin/youtube-upload --title="A.S. Mutter" /root/test.mp4 /root/abc.mp4 /root/123.mp4
+
+
+注意: 文件的默认位置
+/root/.client_secrets.json
+/root/.youtube-upload-credentials.json
+
+#第一次上传会提示验证, 把 url 复制到浏览器中并打开, 一直下一步,最后得到一串字符串,复制然后粘贴到shell中,验证成功即可上传视频.
+并且生成 /root/.youtube-upload-credentials.json 文件, 下次上传就不需要再验证了
+
+youtube-upload \
+  --title="upload test" \
+  --description="description test" \
+  --category="People & Blogs" \
+  --client-secrets="/root/cs2.json" \
+  --credentials-file="/root/cr.json" \
+  --privacy=private \
+  --publish-at="2024-11-30T15:32:17.0Z" \
+  test.mp4 abc.mp4 123.mp4
+
+
+# 更多参数(还有些参数不常用,没有列出,详细可见源代码)
+  --description-file="/root/description.txt" # 视频详情文本文件
+  --embeddable=True # 允许他人在其网站中嵌入视频, 缺省值为True。
+  --tags="mutter, beethoven" # 标签, 仅为了避免拼错词的辅助。
+  --playlist="My Vlogs" # 视频加入播放列表,没有则创建
+  --thumbnail="img.jpg"  # 视频封面
+
+
+
+windows 调用
+注意: 文件的默认位置
+C:\Users\xxx\.client_secrets.json
+C:\Users\xxx\.youtube-upload-credentials.json
+
+
+首先要解决 cmd/powershell 访问youtube的问题
+
+##### windows cmd/powershell 中访问谷歌
+
+环境：shadowsocks、windows
+本地ss端口设置(这里1080)
+
+cmd命令行:(不用socks5)(临时设置)(也可放置环境变量)
+set http_proxy=http://127.0.0.1:1080
+set https_proxy=http://127.0.0.1:1080
+
+powershell命令行:
+$env:http_proxy="http://127.0.0.1:1080"
+$env:https_proxy="http://127.0.0.1:1080"
+
+简易测试命令：curl https://www.google.com（别用ping）
+
+
+为什么我开启SSR 在PowerShell里 ping www.github.com 还是超时呀
+因为Ping使用的是ICMP协议，SSR应该只能代理sock5和http协议
+
+
+# 再使用命令上传视频,就像使用 ffmpeg 一样运行命令
+```
+python youtube-upload-master/bin/youtube-upload --title="多文件abc" --client-secrets="client_secret\568640717@qq.com/913985299060.json" --credentials-file="client_secret\568640717@qq.com/access_token\tobe-913985299060.json" --description="test description" --privacy=private vvv/test1.mp4 vvv/test2.mp4
+```
+```
+import os
+import subprocess
+#此变量是临时的,只在此脚本运行时生效
+os.environ['http_proxy']  = 'http://127.0.0.1:1800'
+os.environ['https_proxy'] = 'http://127.0.0.1:1800'
+cmd = [
+        'python', 'youtube_upload/main.py',
+        '--title', "test title666",
+        '--client-secrets', f"{client_secrets_file}",
+        '--credentials-file', f"{credentials_file}",
+        '--description', "test description",
+        #'--thumbnail', "vvv/test2.jpg",
+        '--privacy', 'private',
+        '--publish-at',"2024-12-05T15:32:17.0Z",
+        #'--playlist', "My Vlogs666"
+        ]
+    
+cmd.extend(video_list)# 将视频追加到后面
+subprocess.run(cmd, shell=True)
+
+```
+
