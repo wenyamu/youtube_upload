@@ -26,6 +26,7 @@ C:\Users\xxx\.youtube-upload-credentials.json
 ```
 
 第一次上传会提示验证, 把 url 复制到浏览器中并打开, 一直下一步,最后得到一串字符串,复制然后粘贴到shell中,验证成功即可上传视频.
+
 并且生成 /root/.youtube-upload-credentials.json 文件, 下次上传就不需要再验证了
 ```
 python main.py \
@@ -51,9 +52,11 @@ python main.py \
 ## windows 调用
 
 首先要解决 cmd/powershell 访问youtube的问题
+
 windows cmd/powershell 中访问谷歌
 
 环境：shadowsocks、windows
+
 本地ss端口设置(这里1080)
 
 cmd命令行:(不用socks5)(临时设置)(也可放置环境变量)
