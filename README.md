@@ -3,8 +3,10 @@
 修改自: https://github.com/tokland/youtube-upload
 
 注意: 文件的默认位置
+```
 /root/.client_secrets.json
 /root/.youtube-upload-credentials.json
+```
 
 第一次上传会提示验证, 把 url 复制到浏览器中并打开, 一直下一步,最后得到一串字符串,复制然后粘贴到shell中,验证成功即可上传视频.
 并且生成 /root/.youtube-upload-credentials.json 文件, 下次上传就不需要再验证了
@@ -31,8 +33,10 @@ python main.py \
 
 windows 调用
 注意: 文件的默认位置
+```
 C:\Users\xxx\.client_secrets.json
 C:\Users\xxx\.youtube-upload-credentials.json
+```
 
 首先要解决 cmd/powershell 访问youtube的问题
 windows cmd/powershell 中访问谷歌
