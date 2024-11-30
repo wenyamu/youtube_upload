@@ -54,9 +54,9 @@ powershell命令行:
 $env:http_proxy="http://127.0.0.1:1080"
 $env:https_proxy="http://127.0.0.1:1080"
 ```
-简易测试命令：curl https://www.google.com（别用ping）
+简易测试命令：`curl https://www.google.com`（别用ping）
 
-为什么我开启SSR 在PowerShell里 ping www.github.com 还是超时呀
+为什么我开启SSR 在PowerShell里 `ping www.github.com` 还是超时呀
 因为Ping使用的是ICMP协议，SSR应该只能代理sock5和http协议
 
 
