@@ -2,6 +2,17 @@
 简易版
 修改自: https://github.com/tokland/youtube-upload
 
+
+## 要安装的包
+```
+pip install --upgrade google-api-python-client
+pip install --upgrade google-auth-oauthlib google-auth-httplib2
+pip install --upgrade oauth2client
+#进度条
+pip install progressbar2
+```
+
+
 注意: 文件的默认位置
 ### linux
 ```
