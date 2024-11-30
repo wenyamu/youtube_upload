@@ -32,8 +32,8 @@ python main.py \
   --title="upload test" \
   --description="description test" \
   --category="People & Blogs" \
-  --client-secrets="/root/cs2.json" \
-  --credentials-file="/root/cr.json" \
+  --client-secrets="client_secrets.json" \
+  --credentials-file="client_secrets/access_token.json" \
   --privacy=private \
   --publish-at="2024-11-30T15:32:17.0Z" \
   test.mp4 abc.mp4 123.mp4
@@ -71,17 +71,7 @@ $env:https_proxy="http://127.0.0.1:1080"
 为什么我开启SSR 在PowerShell里 `ping www.github.com` 还是超时呀
 因为Ping使用的是ICMP协议，SSR应该只能代理sock5和http协议
 
-
-## 直接运行命令
-```
-python main.py --title="多文件abc" \
---client-secrets="client_secrets.json" \
---credentials-file="client_secrets/access_token.json" \
---description="test description" \
---privacy=private \
-vvv/test1.mp4 vvv/test2.mp4
-```
-## 或者使用 subprocess 运行命令
+## 使用 subprocess 运行命令
 ```
 import os
 import subprocess
