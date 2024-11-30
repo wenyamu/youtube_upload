@@ -3,26 +3,6 @@
 修改自: https://github.com/tokland/youtube-upload
 
 
-
-https://github.com/tokland/youtube-upload
-
-linux 调用
-
-#以下是在linux中调试
-$ wget https://github.com/tokland/youtube-upload/archive/master.zip
-$ unzip master.zip
-$ cd youtube-upload-master
-$ python3 setup.py install
-
-# 上传完就发布
-$ youtube-upload --title="upload test" test.mp4
-
-或者
-# 如果不想安装 python3 setup.py install
-# 可以直接进入目录执行源文件
-$ python3 /root/youtube-upload-master/bin/youtube-upload --title="A.S. Mutter" /root/test.mp4 /root/abc.mp4 /root/123.mp4
-
-
 注意: 文件的默认位置
 /root/.client_secrets.json
 /root/.youtube-upload-credentials.json
@@ -30,7 +10,7 @@ $ python3 /root/youtube-upload-master/bin/youtube-upload --title="A.S. Mutter" /
 #第一次上传会提示验证, 把 url 复制到浏览器中并打开, 一直下一步,最后得到一串字符串,复制然后粘贴到shell中,验证成功即可上传视频.
 并且生成 /root/.youtube-upload-credentials.json 文件, 下次上传就不需要再验证了
 
-youtube-upload \
+python main.py \
   --title="upload test" \
   --description="description test" \
   --category="People & Blogs" \
@@ -49,15 +29,12 @@ youtube-upload \
   --thumbnail="img.jpg"  # 视频封面
 
 
-
 windows 调用
 注意: 文件的默认位置
 C:\Users\xxx\.client_secrets.json
 C:\Users\xxx\.youtube-upload-credentials.json
 
-
 首先要解决 cmd/powershell 访问youtube的问题
-
 ##### windows cmd/powershell 中访问谷歌
 
 环境：shadowsocks、windows
@@ -78,16 +55,27 @@ $env:https_proxy="http://127.0.0.1:1080"
 因为Ping使用的是ICMP协议，SSR应该只能代理sock5和http协议
 
 
-# 再使用命令上传视频,就像使用 ffmpeg 一样运行命令
+## 直接运行命令
 ```
-python youtube-upload-master/bin/youtube-upload --title="多文件abc" --client-secrets="client_secret\568640717@qq.com/913985299060.json" --credentials-file="client_secret\568640717@qq.com/access_token\tobe-913985299060.json" --description="test description" --privacy=private vvv/test1.mp4 vvv/test2.mp4
+python main.py --title="多文件abc" \
+--client-secrets="client_secrets.json" \
+--credentials-file="client_secrets/access_token.json" \
+--description="test description" \
+--privacy=private \
+vvv/test1.mp4 vvv/test2.mp4
 ```
+## 或者使用 subprocess 运行命令
 ```
 import os
 import subprocess
+
+#设置代理
 #此变量是临时的,只在此脚本运行时生效
 os.environ['http_proxy']  = 'http://127.0.0.1:1800'
 os.environ['https_proxy'] = 'http://127.0.0.1:1800'
+
+client_secrets_file = "client_secrets.json"
+credentials_file = "client_secrets/access_token.json"
 cmd = [
         'python', 'youtube_upload/main.py',
         '--title', "test title666",
@@ -99,7 +87,7 @@ cmd = [
         '--publish-at',"2024-12-05T15:32:17.0Z",
         #'--playlist', "My Vlogs666"
         ]
-    
+video_list = ['vvv/test1.mp4','vvv/test2.mp4']
 cmd.extend(video_list)# 将视频追加到后面
 subprocess.run(cmd, shell=True)
 
