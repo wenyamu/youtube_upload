@@ -31,7 +31,7 @@ class UploadApp(QWidget):
         layout.addWidget(self.username_input)
         
         self.password_label = QLabel('Password:')
-        self.password_input = QLineEdit("]5nH8s{-u4[Sb@p-")
+        self.password_input = QLineEdit("123456")
         self.password_input.setEchoMode(QLineEdit.Password)
         layout.addWidget(self.password_label)
         layout.addWidget(self.password_input)
