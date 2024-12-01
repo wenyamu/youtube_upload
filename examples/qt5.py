@@ -16,7 +16,7 @@ class UploadApp(QWidget):
         layout = QVBoxLayout()
         
         self.server_label = QLabel('Server Address:')
-        self.server_input = QLineEdit("45.77.127.184")
+        self.server_input = QLineEdit("5.77.17.18")
         layout.addWidget(self.server_label)
         layout.addWidget(self.server_input)
         
