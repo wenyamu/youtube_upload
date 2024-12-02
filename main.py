@@ -97,31 +97,24 @@ def get_category_id(category):
     """Return category ID from its name."""
     if category:
         if category in categories.IDS:
-            ncategory = categories.IDS[category]
-            debug("Using category: {0} (id={1})".format(category, ncategory))
+            category_id = categories.IDS[category]
+            debug("视频分类: {0} (id={1})".format(category, category_id))
             return str(categories.IDS[category])
         else:
-            msg = "{0} is not a valid category".format(category)
+            msg = "{0} 不是一个有效的分类".format(category)
             raise InvalidCategory(msg)
 
 
-def upload_youtube_video(youtube, options, video_path, total_videos, index):
-    """Upload video with index (for split videos)."""
+def upload_youtube_video(youtube, options, video_path):
+    """Upload video"""
     u = lib.to_utf8
     title = u(options.title)
     if hasattr(u('string'), 'decode'):
         description = u(options.description or "").decode("string-escape")
     else:
         description = options.description
-    if options.publish_at:
-        debug("Your video will remain private until specified date.")
-    
+        
     tags = [u(s.strip()) for s in (options.tags or "").split(",")]
-    
-    #如果一次上传多个视频时, 视频标题的默认格式: 视频标题 [1/3]
-    ns = dict(title=title, n=index + 1, total=total_videos)
-    title_template = u(options.title_template)
-    complete_title = (title_template.format(**ns) if total_videos > 1 else title)
     
     file_size = os.path.getsize(video_path)
     #print("文件大小,字节数: ", file_size)
@@ -131,7 +124,7 @@ def upload_youtube_video(youtube, options, video_path, total_videos, index):
     category_id = get_category_id(options.category)
     request_body = {
         "snippet": {
-            "title": complete_title,
+            "title": title,
             "description": description,
             "categoryId": category_id,
             "tags": tags,
@@ -152,7 +145,7 @@ def upload_youtube_video(youtube, options, video_path, total_videos, index):
         },
     }
     
-    debug("Start upload: {0}".format(video_path))
+    debug("开始上传: {0}".format(video_path))
     try:
         video_id = upload_video.upload(youtube, video_path,
                                        request_body, progress_callback=progress.callback,
@@ -168,8 +161,8 @@ def get_youtube_handler(options):
     default_credentials = os.path.join(home, ".youtube-upload-credentials.json")
     client_secrets = options.client_secrets or os.path.join(home, ".client_secrets.json")
     credentials = options.credentials_file or default_credentials
-    debug("Using client secrets: {0}".format(client_secrets))
-    debug("Using credentials file: {0}".format(credentials))
+    #debug("Using client secrets: {0}".format(client_secrets))
+    #debug("Using credentials file: {0}".format(credentials))
     
     return auth.get_resource(client_secrets, credentials,
                              get_code_callback=auth.console.get_code)
@@ -181,29 +174,31 @@ def parse_options_error(parser, options):
     missing = [opt for opt in required_options if not getattr(options, opt)]
     if missing:
         parser.print_usage()
-        msg = "Some required option are missing: {0}".format(", ".join(missing))
+        msg = "缺少一些必需的选项: {0}".format(", ".join(missing))
         raise OptionsError(msg)
 
 
-def run_main(parser, options, args, output=sys.stdout):
-    """Run the main scripts from the parsed options/args."""
+def run_main(parser, options, videos, output=sys.stdout):
+    """Run the main scripts from the parsed options/videos."""
     parse_options_error(parser, options)
     youtube = get_youtube_handler(options)
     
-    #上传命令,如果只是验证,可以注释掉
+    #上传命令,如果只是为了生成证书文件,可以注释掉
     ''''''
     if youtube:
-        for index, video_path in enumerate(args):
-            video_id = upload_youtube_video(youtube, options, video_path, len(args), index)
+        for video_path in videos:
+            video_id = upload_youtube_video(youtube, options, video_path)
             video_url = WATCH_VIDEO_URL.format(id=video_id)
-            debug("Video URL: {0}".format(video_url))
+            debug("视频网址: {0}".format(video_url))
             
+            #设置视频封面
             if options.thumb:
                 youtube.thumbnails().set(videoId=video_id, media_body=options.thumb).execute()
+            #加入播放列表,如果不存在,则先创建播放列表,然后再加入
             if options.playlist:
                 playlists.add_video_to_playlist(youtube, video_id,
                                                 title=lib.to_utf8(options.playlist), privacy=options.privacy)
-            output.write(video_id)# + "\n"
+            #output.write(video_id)
     else:
         raise AuthenticationError("Cannot get youtube resource")
     
@@ -211,11 +206,11 @@ def run_main(parser, options, args, output=sys.stdout):
 def main(arguments):
     """Upload videos to Youtube."""
     usage = """Usage: %prog [OPTIONS] VIDEO [VIDEO2 ...]
-
+    
     Upload videos to Youtube."""
     parser = optparse.OptionParser(usage)
-
-    # Video metadata
+    
+    # 视频元数据
     parser.add_option('-t', '--title', dest='title', type="string",
                       help='Video title')
     parser.add_option('-c', '--category', dest='category', type="string",
@@ -227,53 +222,55 @@ def main(arguments):
     parser.add_option('', '--tags', dest='tags', type="string",
                       help='Video tags (separated by commas: "tag1, tag2,...")')
     parser.add_option('', '--privacy', dest='privacy', metavar="STRING",
-                      default="public", help='Privacy status (public | unlisted | private)')
+                      default="public", help='public | unlisted | private')
     parser.add_option('', '--publish-at', dest='publish_at', metavar="datetime",
-                      default=None, help='Publish date (ISO 8601): YYYY-MM-DDThh:mm:ss.sZ')
-    parser.add_option('', '--license', dest='license', metavar="string",
-                      choices=('youtube', 'creativeCommon'), default='youtube',
-                      help='License for the video, either "youtube" (the default) or "creativeCommon"')
-    parser.add_option('', '--location', dest='location', type="string",
-                      default=None, metavar="latitude=VAL,longitude=VAL[,altitude=VAL]",
-                      help='Video location"')
-    parser.add_option('', '--recording-date', dest='recording_date', metavar="datetime",
-                      default=None, help="Recording date (ISO 8601): YYYY-MM-DDThh:mm:ss.sZ")
-    parser.add_option('', '--default-language', dest='default_language', type="string",
-                      default=None, metavar="string",
-                      help="Default language (ISO 639-1: en | fr | de | ...)")
-    parser.add_option('', '--default-audio-language', dest='default_audio_language', type="string", default=None, metavar="string",
-                      help="Default audio language (ISO 639-1: en | fr | de | ...)")
+                      default=None, help='(ISO 8601): YYYY-MM-DDThh:mm:ss.sZ')
     parser.add_option('', '--thumbnail', dest='thumb', type="string", metavar="FILE",
-                      help='Image file to use as video thumbnail (JPEG or PNG)')
+                      help='Image file(JPEG or PNG)')
     parser.add_option('', '--playlist', dest='playlist', type="string",
-                      help='Playlist title (if it does not exist, it will be created)')
-    parser.add_option('', '--title-template', dest='title_template',
-                      type="string", default="{title} [{n}/{total}]", metavar="string",
-                      help='Template for multiple videos (default: {title} [{n}/{total}])')
+                      help='Playlist title')
+    
+    # 不常用元数据
     parser.add_option('', '--embeddable', dest='embeddable', default=True,
                       help='Video is embeddable')
-
-    # Authentication
+    parser.add_option('', '--license', dest='license', metavar="string",
+                      choices=('youtube', 'creativeCommon'), default='youtube',
+                      help='License for the video')
+    parser.add_option('', '--location', dest='location', type="string",
+                      default=None, metavar="latitude=VAL,longitude=VAL[,altitude=VAL]",help='Video location"')
+    parser.add_option('', '--recording-date', dest='recording_date', metavar="datetime",                  default=None, help="(ISO 8601): YYYY-MM-DDThh:mm:ss.sZ")
+    parser.add_option('', '--default-language', dest='default_language', type="string",
+                      default=None, metavar="string",
+                      help="(ISO 639-1): en | fr | de | ...")
+    parser.add_option('', '--default-audio-language', dest='default_audio_language',                  type="string", default=None, metavar="string",
+                      help="(ISO 639-1): en | fr | de | ...")
+    
+    # 验证
     parser.add_option('', '--client-secrets', dest='client_secrets',
                       type="string", help='Client secrets JSON file')
     parser.add_option('', '--credentials-file', dest='credentials_file',
                       type="string", help='Credentials JSON file')
     
-    # Additional options
+    # 附加选项
+    """
+    chunksize 参数指定每次上传的每个数据块的大小（以字节为单位）
+    为可靠连接设置较高的值，因为块越少，上传速度越快。
+    为在可靠性较低的连接上更好地恢复，设置较低的值。
+    """
     parser.add_option('', '--chunksize', dest='chunksize', type="int",
                       default=1024 * 1024 * 8, help='Update file chunksize')
     
-    options, args = parser.parse_args(arguments)
-    #print(options)
-    #print(args)
+    options, videos = parser.parse_args(arguments)
+    #print(options) #{'title': 'test title', 'description': 'info', ...}
+    #print(videos)  #["video1.mp4", "video2.mp4"]
     if options.description_file is not None and os.path.exists(options.description_file):
         with open(options.description_file, encoding="utf-8") as file:
             options.description = file.read()
-
+        
     try:
         #上传命令
-        run_main(parser, options, args)
-        pass
+        run_main(parser, options, videos)
+        #pass
     except googleapiclient.errors.HttpError as error:
         response = bytes.decode(error.content, encoding=lib.get_encoding()).strip()
         raise RequestError(u"Server response: {0}".format(response))
@@ -284,3 +281,4 @@ def run():
     
 if __name__ == '__main__':
     run()
+    
